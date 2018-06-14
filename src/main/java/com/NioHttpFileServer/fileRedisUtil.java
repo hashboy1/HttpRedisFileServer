@@ -158,7 +158,8 @@ public class fileRedisUtil {
 		   
 		   //fru.deleteAllKeys();
 		   
-		   fru.putFolder("E:\\mycat\\bin\\","/maycat/");
+		   //fru.putFolder("E:\\mycat\\bin\\","/maycat/");
+		   fru.putFolder("E:\\workspace\\NioHttpFileServer\\NioHttpFileServer\\files\\","/files/");
 		   System.out.println(fru.List().toString());
 		  
 		   
