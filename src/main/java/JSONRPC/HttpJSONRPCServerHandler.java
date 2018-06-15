@@ -1,0 +1,252 @@
+package JSONRPC;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+import javax.activation.MimetypesFileTypeMap;
+import javax.tools.JavaFileObject;
+
+import com.google.gson.JsonObject;
+
+import Common.HttpUtil;
+import Common.JSONRPCBaseService;
+import Redis.fileRedisUtil;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.util.CharsetUtil;
+
+
+public class HttpJSONRPCServerHandler extends SimpleChannelInboundHandler<FullHttpRequest>{
+
+    private final String url;
+
+    
+    public HttpJSONRPCServerHandler(String url) {
+        this.url = url;
+    }
+    
+    @Override
+    protected void messageReceived(ChannelHandlerContext ctx,
+            FullHttpRequest request) throws Exception {
+    	/*
+    	System.out.println("-----------------------------------");
+    	System.out.println(request.toString());
+    	System.out.println("-----------------------------------");
+    	*/
+    	
+        if(!request.decoderResult().isSuccess())
+        {
+            sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+            return;
+        }
+        
+        
+      
+        
+        String uri = request.uri();         
+        System.out.println("request url:" + uri);
+        
+        if (uri.length() <= 1)
+        {
+        	 sendError(ctx, HttpResponseStatus.BAD_REQUEST);
+             return;
+        }
+ 
+        
+        // check index message 
+        int position = uri.indexOf("index"); 
+        
+        if (position >0)
+        {
+        	welcomeMsg(ctx);
+        	return;
+        }
+        
+        //check unuseful message
+       if (uri.equals("/favicon.ico")) return; //unuseful message
+        
+       //analysis the HttpMethod 
+       if(request.method() != HttpMethod.GET )
+       {
+    	   System.out.println("this is the Get Methond");
+    	   if (uri.indexOf("?") > -1 ) uri = uri.substring(0, uri.indexOf("?"));  // avoid the parameters on URL
+    	  
+       }  	   
+       else if (request.method() != HttpMethod.POST) 
+       {
+    	   System.out.println("this is the Post Methond");
+    	   if (uri.indexOf("?") > -1 ) uri = uri.substring(0, uri.indexOf("?"));   // avoid the parameters on URL
+       }
+  
+       else
+       {
+                sendError(ctx, HttpResponseStatus.METHOD_NOT_ALLOWED);
+                return;
+       }
+       
+       
+        /*
+         * get class name from URL
+         * create one instance by java reflected
+         * call the run method by ancestor
+         * 
+         * 
+         */
+        
+        
+        //get parameter for post
+        
+        HttpUtil hu= new HttpUtil(request);
+        Map<String,String> ParameterInt= hu.parse();
+        String parameter[] =new String[2];
+        int i =0;
+        for (Map.Entry<String, String> entry : ParameterInt.entrySet()) 
+        {
+        	if (i<2) //only get two parameters,the other will be ignored
+        	{
+        	parameter[i] = entry.getValue();
+        	System.out.println("parameter:"+parameter[i]);
+        	i++;
+        	}
+        }
+        
+        
+     try 
+     {
+        Class a = Class.forName(uri.substring(1));
+        JSONRPCBaseService instance1 = (JSONRPCBaseService) a.newInstance(); 
+        String writecontent= instance1.run(parameter[0],parameter[1]);
+        
+        JsonObject obj = new JsonObject();
+        obj.addProperty("result", 0);
+        obj.addProperty("content", writecontent);
+   
+     
+        
+        
+        ByteBuf buffer = Unpooled.copiedBuffer(obj.toString(),CharsetUtil.UTF_8); 
+
+         
+        //construct the http header
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=UTF-8");
+        response.headers().set(HttpHeaderNames.ORIGIN,"*");
+        response.headers().set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN,"*");
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+        response.content().writeBytes(buffer);  
+       
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE); 
+     }
+     catch (ClassNotFoundException ex) 
+     {
+    	 ex.printStackTrace();
+    	 sendError(ctx, HttpResponseStatus.NOT_FOUND);
+     }
+        
+        //try to access:http://192.168.0.160:8888/files/jixiebi.FBX
+        
+       
+    }
+    
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
+            throws Exception {
+        cause.printStackTrace();
+        if(ctx.channel().isActive())
+            sendError(ctx, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+      
+    private static void sendRedirect(ChannelHandlerContext ctx, String newUri){
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND);
+        response.headers().set(HttpHeaderNames.LOCATION, newUri);
+        response.headers().set(HttpHeaderNames.ORIGIN,"*");
+        response.headers().set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN,"*");
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+    }
+    private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status){
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, 
+                Unpooled.copiedBuffer("Failure: " + status.toString() + "\r\n", CharsetUtil.UTF_8));
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=UTF-8");
+        response.headers().set(HttpHeaderNames.ORIGIN,"*");
+        response.headers().set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN,"*");
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+    }
+    private static void setContentTypeHeader(HttpResponse response){
+        MimetypesFileTypeMap mimetypesFileTypeMap = new MimetypesFileTypeMap();
+        response.headers().set(HttpHeaderNames.ORIGIN,"*");
+        response.headers().set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN,"*");
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/octet-stream");
+    }
+    
+    
+    private  void welcomeMsg(ChannelHandlerContext ctx){
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=UTF-8");
+        response.headers().set(HttpHeaderNames.ORIGIN,"*");
+        response.headers().set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN,"*");
+      
+        StringBuilder buf = new StringBuilder();
+        
+        buf.append("<!DOCTYPE html>\r\n");
+        buf.append("<html><head><title>");
+       
+        buf.append("Welcome to My Server");
+        buf.append("</title></head><body>\r\n");
+        
+        buf.append("<h3>");
+        buf.append("Welcome to My Server");
+        buf.append("<BR>");
+        buf.append("Please input your file URL in the address bar or click the file name from the below URLs.");
+        buf.append("<BR>");
+        buf.append("Any question,please don't hesitate to contact with me.");
+        buf.append("</h3>\r\n");
+        buf.append("<ul>");
+        
+        
+        fileRedisUtil fru = new fileRedisUtil();
+        Set<String>  keyList= fru.List();
+        
+        for (String f : keyList) {
+          
+        	
+        	if (f.length()>0)
+        	{
+	        	
+		            buf.append("<li>Download URL：<a href=\"http:\\\\");
+		            buf.append(f);
+		            buf.append("\">");
+		            buf.append(f);
+		            buf.append("</a></li>\r\n");
+	        	
+	        }
+        	} 
+
+
+        
+        buf.append("</ul></body></html>\r\n");
+        
+        ByteBuf buffer = Unpooled.copiedBuffer(buf,CharsetUtil.UTF_8);  
+        response.content().writeBytes(buffer);  
+        buffer.release(); 
+        
+       //System.out.println(response.toString()); 
+       
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE); 
+    }
+}
