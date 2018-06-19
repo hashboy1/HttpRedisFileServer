@@ -84,13 +84,13 @@ class HttpJSONRPCServer {
     }
     
     public static void main(String[] args) throws Exception {
-        int port = configer.HttpPort;
+        int port = configer.DefaultHttpPort;
         if(args.length > 0)
         {
             try{
                 port = Integer.parseInt(args[0]);
             }catch(NumberFormatException e){
-                port = configer.HttpPort;
+                port = configer.DefaultHttpPort;
             }
         }
         

@@ -9,13 +9,13 @@ public class configer {
       
       
       //http service port
-      public static String HttpIp="192.168.0.160";
-      public static int HttpPort=8888;
+      public static String DefaultHttpIP="192.168.0.160";
+      public static int DefaultHttpPort=8888;
        
       //encode configuration
       public static String encoding = "ISO-8859-1";
       
-      //path configuration
+      //path for HashMapFileServer
       public static String sourcePath="C:\\Users\\Administrator\\Desktop\\cache\\";
       
       //service package configuration

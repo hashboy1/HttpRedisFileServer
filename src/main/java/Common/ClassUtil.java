@@ -27,6 +27,7 @@ public class ClassUtil {
 	    public ClassUtil(String varPakageName)
 	    {
 	    	this.packageName=varPakageName;
+	    
 	    }
 	    
 	  
@@ -158,7 +159,7 @@ public class ClassUtil {
 	     List<Class<?>> Lc=getClasses();
 	     for (Class a :  Lc)
 	     {
-	    	 String url = configer.HttpIp+":"+configer.HttpPort+"/"+a.getName();
+	    	 String url = configer.DefaultHttpIP+":"+configer.DefaultHttpPort+"/"+a.getName();
 	    	 jedis.setex(url,configer.RedisKeyExpiredSeconds,url); //key will be expired over 120s
 	    	
 	     }
