@@ -1,8 +1,12 @@
 package JSONRPC.Service;
 
-import Common.JSONRPCBaseService;
+import Annotation.ServiceMapping;
+import Common.RPCBaseService;
 
-public class PrintService2 extends JSONRPCBaseService {
+
+
+@ServiceMapping(Value="PrintService2",Method =0)   //Service Register
+public class PrintService2 extends RPCBaseService {
 
 
 	@Override

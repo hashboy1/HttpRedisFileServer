@@ -6,7 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import Common.ClassUtil;
+import Common.ClassListUtil;
 import Common.configer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -23,7 +23,7 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 
 /*
  * 
- *  redis is the service register
+ * all services will be registered in redis
  * 
  * 
  * 
@@ -33,7 +33,7 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 class HttpJSONRPCServer {
     private static final String DEFAULT_URL = "/src/";
     
-    public void run(final int port, final String url)throws Exception{
+    public void run(final String IP,final int port, final String url)throws Exception{
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try{
@@ -45,7 +45,7 @@ class HttpJSONRPCServer {
     	        public void run() {  
     	            System.out.println("services registed,current time stamp:" + new Date() );  
     	           
-    	            		ClassUtil cu = new ClassUtil(configer.ServicePackage);
+    	            		ClassListUtil cu = new ClassListUtil(IP,port);
     	            		try {
 								cu.registerAllService();
 							} catch (Exception e) {
@@ -69,12 +69,9 @@ class HttpJSONRPCServer {
                     ch.pipeline().addLast("http-chunked", new ChunkedWriteHandler());
                     ch.pipeline().addLast("fileServerHandler", new HttpJSONRPCServerHandler(url));
                 }
-            });
-                 
-            String ip = InetAddress.getLocalHost().getHostAddress().toString();
-           // System.out.println(ip);
-            ChannelFuture f = b.bind(ip, port).sync();
-            System.out.println("HTTP 文件服务器启动, 地址是： " + "http://"+ ip +":" + port + url);
+            });              
+            ChannelFuture f = b.bind(IP, port).sync();
+            System.out.println("HTTP 文件服务器启动, 地址是： " + "http://"+ IP +":" + port + url);
             f.channel().closeFuture().sync();
             
         }finally{
@@ -84,21 +81,26 @@ class HttpJSONRPCServer {
     }
     
     public static void main(String[] args) throws Exception {
-        int port = configer.DefaultHttpPort;
+        String IP = configer.DefaultHttpIP;
+    	int port = configer.DefaultHttpPort;
         if(args.length > 0)
         {
             try{
-                port = Integer.parseInt(args[0]);
+            	IP = args[0];
+                port = Integer.parseInt(args[1]);
             }catch(NumberFormatException e){
+            	IP = configer.DefaultHttpIP;
                 port = configer.DefaultHttpPort;
             }
         }
         
+        
+        
+        
         //String url = DEFAULT_URL;
-        String url = "/files/";
-        if(args.length > 1)
-            url = args[1];
-        new HttpJSONRPCServer().run(port, url);
+        String url = "/index.html";
+     
+        new HttpJSONRPCServer().run(IP,port, url);
     }
 }
 

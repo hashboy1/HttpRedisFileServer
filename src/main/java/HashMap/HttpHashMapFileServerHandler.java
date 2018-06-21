@@ -66,12 +66,13 @@ public class HttpHashMapFileServerHandler extends SimpleChannelInboundHandler<Fu
         	return;
         }
         
+        if (uri.equals("/favicon.ico")) return; //unuseful message
         
         //get file from hashMap 
         byte[] writecontent=(byte[]) handlerMap.get(uri);
          
          if (writecontent == null || writecontent.length == 0  )
-         {     System.out.println("can't find "+ uri +" from redis,it will be redirect to error page");
+         {     System.out.println("can't find "+ uri +" from hashmap,it will be redirect to error page");
          	  sendError(ctx, HttpResponseStatus.NOT_FOUND);
          	  return;
          }        

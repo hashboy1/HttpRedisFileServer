@@ -3,6 +3,7 @@ package Redis;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.activation.MimetypesFileTypeMap;
@@ -146,18 +147,20 @@ public class HttpRedisFileServerHandler extends SimpleChannelInboundHandler<Full
         buf.append("</h3>\r\n");
         buf.append("<ul>");
         fileRedisUtil fru = new fileRedisUtil();
-        Set<String>  keyList= fru.List();
-        
-        for (String f : keyList) {
+
+
+        Map<String,String>  keyList= fru.List();
+            
+        for (Map.Entry<String, String> entry : keyList.entrySet()) {
           
         	
-        	if (f.length()>0)
+        	if (entry.getKey().length()>0)
         	{
 	        	
 		            buf.append("<li>Download URL：<a href=\"");
-		            buf.append(f);
+		            buf.append(entry.getValue());
 		            buf.append("\">");
-		            buf.append(f);
+		            buf.append(entry.getKey());
 		            buf.append("</a></li>\r\n");
 	        	
 	        }

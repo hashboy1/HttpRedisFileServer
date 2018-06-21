@@ -13,15 +13,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import Annotation.ServiceMapping;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import test.Person;
 
-
+/*
+ * old tools for service register,now it has changed to classListUtil
+ * 
+ * 
+ * 
+ * 
+ */
 
 public class ClassUtil {
 	
  
+	
+	
+	
+	
 	    private static String packageName = "";
 	    
 	    public ClassUtil(String varPakageName)
@@ -30,6 +42,8 @@ public class ClassUtil {
 	    
 	    }
 	    
+	    
+	   
 	  
 	  
 	    public static List<Class<?>> getClasses()  
@@ -44,8 +58,8 @@ public class ClassUtil {
 	        ArrayList<Class<?>> classes = new ArrayList<Class<?>>();  
 	        while (resources.hasMoreElements()) {    
 	            URL resource = resources.nextElement();  
-	            System.out.println(resource.getProtocol());  
-	            System.out.println(resource.getPath());  
+	            System.out.println("Portocal:"+resource.getProtocol());  
+	            System.out.println("Path:"+resource.getPath());  
 	  
 	            String protocol = resource.getProtocol();  
 	  
@@ -80,12 +94,23 @@ public class ClassUtil {
 	                assert !file.getName().contains(".");  
 	                classes.addAll(findClasses(file,  
 	                        packageName + "." + file.getName()));  
-	            } else if (file.getName().endsWith(".class")) {  
-	                classes.add(Class.forName(packageName  
-	                        + "."  
-	                        + file.getName().substring(0,  
-	                                file.getName().length() - 6)));  
-	            }  
+	            } else if (file.getName().endsWith(".class") && file.getName().indexOf("$") == -1) {  
+	               
+	            	if (packageName ==null && packageName.length()<=0)
+	            	{
+	            		classes.add(Class.forName(file.getName().substring(0,  
+                                file.getName().length() - 6)));  
+	            	}
+	            	else
+	            	{
+	            	
+	            		
+	            		classes.add(Class.forName(packageName  
+		                        + "."  
+		                        + file.getName().substring(0,  
+		                                file.getName().length() - 6)));  
+	            	}
+	            	}  
 	        }  
 	        return classes;  
 	  
@@ -159,11 +184,37 @@ public class ClassUtil {
 	     List<Class<?>> Lc=getClasses();
 	     for (Class a :  Lc)
 	     {
+	    	 ServiceMapping sm = (ServiceMapping)a.getAnnotation(ServiceMapping.class);
+	    	 
+	    	 if (sm!=null)
+	    	 {
+	    	 
 	    	 String url = configer.DefaultHttpIP+":"+configer.DefaultHttpPort+"/"+a.getName();
-	    	 jedis.setex(url,configer.RedisKeyExpiredSeconds,url); //key will be expired over 120s
-	    	
+	    	 String key = sm.Value();
+	    	 jedis.setex(key,configer.RedisKeyExpiredSeconds,url); //key will be expired over 120s
+	    	 }
 	     }
 		
+	}
+	
+/*
+ * 
+ * 
+ * one function to create class by java reflected
+ * only support the class which the ancestor is the JSONBaseService
+ * 
+ * 	
+ */
+	
+
+	public static String callJSONBaseService(String className,String parameter1,String parameter2) throws Exception
+	{
+		
+		
+		Class a = Class.forName(className);
+        RPCBaseService instance1 = (RPCBaseService) a.newInstance(); 
+        String writecontent= instance1.run(parameter1,parameter1);
+        return writecontent;
 	}
 	
 	
@@ -172,12 +223,15 @@ public class ClassUtil {
 		// TODO Auto-generated method stub
 		
 		
-		ClassUtil cu = new ClassUtil(configer.ServicePackage);
-		cu.registerAllService();
+		ClassUtil cu = new ClassUtil("");
+		//cu.registerAllService();
+		
+		
+		
+		
 		
 		
 		/*
-		List<Class<?>> Lc=cu.getClasses();
 		
 		//Added one timer trigger into program running environment
 	    Runnable runnable = new Runnable() {  
@@ -189,7 +243,7 @@ public class ClassUtil {
 	    			{
 	            	System.out.println("Class Name:"+a.getName());	
 	    			JSONRPCBaseService instance1 = (JSONRPCBaseService) a.newInstance();    			
-	    			System.out.println(instance1.run("test message"));
+	    			//System.out.println(instance1.run("test message"));
 	    			}
 	            	catch (Exception ex)
 	            	{
@@ -201,7 +255,7 @@ public class ClassUtil {
 	    };  
 	    ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();  
 	    // 第二个参数为首次执行的延时时间，第三个参数为定时执行的间隔时间  
-	    service.scheduleAtFixedRate(runnable, 1, 2, TimeUnit.MINUTES);
+	    service.scheduleAtFixedRate(runnable, 0, 2, TimeUnit.MINUTES);
 		*/
 		
 		

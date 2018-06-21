@@ -7,7 +7,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import Common.configer;
@@ -69,24 +71,35 @@ public class fileRedisUtil {
 		
 	}
 	
-	public Set<String> List()
+	public Map<String,String> List()
 	{
-		
+		Map<String,String> rv=new HashMap<>();
 				
 		Set<String> st= jedis.keys("*");
 		
-		return st;
+		for (String key:st)
+		{
+			String value = this.getRedisKey(key);
+			rv.put(key, value);
+		}
+		
+		
+		return rv;
 		
 		
 	}
 	
 	public void deleteAllKeys()
 	{
-		 Set<String>  keyList= List();   
-		for (String f : keyList) {
-			jedis.del(f);
-	        	}
+		 Map<String,String>  keyList= this.List();  
+		 
+	
+		for (Map.Entry<String, String> entry : keyList.entrySet())
+		{
+			jedis.del(entry.getKey());
+	     }
 	}
+	
 	
 	public void putFolder(String path,String keyroot) throws Exception
 	{

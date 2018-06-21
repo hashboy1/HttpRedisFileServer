@@ -18,6 +18,6 @@ public class configer {
       //path for HashMapFileServer
       public static String sourcePath="C:\\Users\\Administrator\\Desktop\\cache\\";
       
-      //service package configuration
-      public static String ServicePackage="JSONRPC.Service";
+      //service package configuration,but it has been abandoned, you can register the service by the class annotation.
+      public static String ServicePackage="JSONRPC.Service";    
 }

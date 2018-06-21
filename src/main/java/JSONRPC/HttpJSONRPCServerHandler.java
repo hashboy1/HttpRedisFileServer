@@ -13,8 +13,9 @@ import javax.tools.JavaFileObject;
 
 import com.google.gson.JsonObject;
 
+import Common.ClassUtil;
 import Common.HttpUtil;
-import Common.JSONRPCBaseService;
+import Common.RPCBaseService;
 import Redis.fileRedisUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -129,21 +130,21 @@ public class HttpJSONRPCServerHandler extends SimpleChannelInboundHandler<FullHt
         
      try 
      {
-        Class a = Class.forName(uri.substring(1));
-        JSONRPCBaseService instance1 = (JSONRPCBaseService) a.newInstance(); 
-        String writecontent= instance1.run(parameter[0],parameter[1]);
-        
+       
+    	// get the classname by uri from redis
+    	 
+    	 
+    	//Class Constructed,maybe i need create one class to implement its
+        String writecontent = ClassUtil.callJSONBaseService(uri.substring(1), parameter[0], parameter[1]);
+               
         JsonObject obj = new JsonObject();
         obj.addProperty("result", 0);
         obj.addProperty("content", writecontent);
-   
-     
-        
-        
+  
         ByteBuf buffer = Unpooled.copiedBuffer(obj.toString(),CharsetUtil.UTF_8); 
 
          
-        //construct the http header
+        //construct the HTTP header
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=UTF-8");
         response.headers().set(HttpHeaderNames.ORIGIN,"*");
@@ -220,18 +221,19 @@ public class HttpJSONRPCServerHandler extends SimpleChannelInboundHandler<FullHt
         
         
         fileRedisUtil fru = new fileRedisUtil();
-        Set<String>  keyList= fru.List();
+
+    Map<String,String>  keyList= fru.List();
         
-        for (String f : keyList) {
+    for (Map.Entry<String, String> entry : keyList.entrySet()) {
           
         	
-        	if (f.length()>0)
+        	if (entry.getKey().length()>0)
         	{
 	        	
 		            buf.append("<li>Download URL：<a href=\"http:\\\\");
-		            buf.append(f);
+		            buf.append(entry.getValue());
 		            buf.append("\">");
-		            buf.append(f);
+		            buf.append(entry.getKey());
 		            buf.append("</a></li>\r\n");
 	        	
 	        }

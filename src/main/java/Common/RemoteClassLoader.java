@@ -12,7 +12,7 @@ public class RemoteClassLoader extends ClassLoader {
 	
 	
    
-	public Class<?> loadFile(String Name)  throws ClassNotFoundException
+	public Class<?> loadClassByHTTPFile(String Name)  throws ClassNotFoundException
     {
     	
     	try {
@@ -22,7 +22,7 @@ public class RemoteClassLoader extends ClassLoader {
 			
     		byte data[]=loadHTTPClassFile(result[result.length-1]);
     		
-			System.out.println(data);
+			//System.out.println(data);
 			return super.defineClass(Name,data, 0, data.length);
 			
 			
@@ -40,7 +40,7 @@ public class RemoteClassLoader extends ClassLoader {
     public static byte[] loadHTTPClassFile(String ClassName) throws Exception
     {
     	
-    	
+    	//"http://192.168.0.160:8080/examples/JSONRPC.Service.PrintService.class"
     	String[] result=ClassName.split("\\.");
     	String   name  = result[result.length-1];
     	URL url=new URL("http://192.168.0.160:8080/examples/" + name + ".class");
@@ -80,9 +80,27 @@ public class RemoteClassLoader extends ClassLoader {
 	     
 		
 		RemoteClassLoader rc =new RemoteClassLoader();
-		Class<?> cl=rc.loadFile("JSONRPC.Service.PrintService");
+		Class<?> cl=rc.loadClassByHTTPFile("JSONRPC.Service.PrintService");
+		
+		//call method by ancestor
+		/*
 		JSONRPCBaseService n1=(JSONRPCBaseService)cl.newInstance();
 		System.out.println(n1.run("Parameter1", "Parameter2"));
+		*/
+		//call method by reflect
+		Method[] meth =   cl.getDeclaredMethods();
+        for (Method m : meth)
+        {
+      	  System.out.println("function name:"+m);
+      	  System.out.println("function return type:"+m.getReturnType());
+      	  
+      	  if (m.toString().indexOf("run") >-1)
+      	  {
+      		  String result1 = (String) m.invoke(cl.newInstance(),"Parameter1", "Parameter2");
+      		  System.out.println("function result:"+result1);
+      		  
+      	  }
+        }
 		
 		
 		//System.out.println(new String(RemoteClassLoader.loadHTTPClassFile("PrintService"),"UTF-8"));
