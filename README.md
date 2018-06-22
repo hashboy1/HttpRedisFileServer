@@ -7,7 +7,7 @@
 
 缺陷：1、目前改为使用hashMap代替redis,但是需考虑文件过多时内存溢出问题。 
      
-CLass JSONSOA.HttpSOARPCServer             RPC服务主程序，扫描工程中所有引用@ServiceMapping注解的类进行注册，并发布服务。注所有应用注解的因继承与
+CLass JSONSOA.HttpJSONSOAServer             RPC服务主程序，扫描工程中所有引用@ServiceMapping注解的类进行注册，并发布服务。注所有应用注解的因继承与
                                             Common.RPCBaseService，并重写run方法。
 Interface Annotation.ServiceMapping         服务注解
 Class ClassListUtil.ClassListUtil           类遍历与服务注册类，后期应加入对于jar包的支持。
