@@ -1,4 +1,4 @@
-package JSONRPC;
+package JSONSOA;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -33,12 +33,12 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.CharsetUtil;
 
 
-public class HttpJSONRPCServerHandler extends SimpleChannelInboundHandler<FullHttpRequest>{
+public class HttpJSONSOAServerHandler extends SimpleChannelInboundHandler<FullHttpRequest>{
 
     private final String url;
 
     
-    public HttpJSONRPCServerHandler(String url) {
+    public HttpJSONSOAServerHandler(String url) {
         this.url = url;
     }
     
@@ -120,9 +120,9 @@ public class HttpJSONRPCServerHandler extends SimpleChannelInboundHandler<FullHt
         for (Map.Entry<String, String> entry : ParameterInt.entrySet()) 
         {
         	if (i<2) //only get two parameters,the other will be ignored
-        	{
+        	{    
         	parameter[i] = entry.getValue();
-        	System.out.println("parameter:"+parameter[i]);
+        	System.out.println("parameter"+i+":"+parameter[i] );
         	i++;
         	}
         }

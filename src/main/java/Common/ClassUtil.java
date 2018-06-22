@@ -213,7 +213,7 @@ public class ClassUtil {
 		
 		Class a = Class.forName(className);
         RPCBaseService instance1 = (RPCBaseService) a.newInstance(); 
-        String writecontent= instance1.run(parameter1,parameter1);
+        String writecontent= instance1.run(parameter1,parameter2);
         return writecontent;
 	}
 	

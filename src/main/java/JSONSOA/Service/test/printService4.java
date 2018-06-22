@@ -1,4 +1,4 @@
-package JSONRPC.Service.test;
+package JSONSOA.Service.test;
 
 import Annotation.ServiceMapping;
 import Common.RPCBaseService;
